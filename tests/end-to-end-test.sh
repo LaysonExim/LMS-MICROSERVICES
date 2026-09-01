@@ -70,7 +70,7 @@ update_loan_status() {
 check_audit() {
     local loan=$1
     echo "Checking audit events for loan $loan..."
-    AUDIT_RESPONSE=$(curl -s "http://localhost:8085/api/v1/audit/loan/$loan")
+    AUDIT_RESPONSE=$(curl -s "http://localhost:8087/api/v1/audit/loan/$loan")
     AUDIT_COUNT=$(echo $AUDIT_RESPONSE | grep -o '"eventType"' | wc -l)
     echo "✅ $AUDIT_COUNT audit events found"
 }
@@ -78,7 +78,7 @@ check_audit() {
 # Function to check report summary
 check_report() {
     echo "Checking report summary..."
-    REPORT_RESPONSE=$(curl -s http://localhost:8087/api/v1/reporting/summary)
+    REPORT_RESPONSE=$(curl -s http://localhost:8085/api/v1/reporting/summary)
     TOTAL_LOANS=$(echo $REPORT_RESPONSE | grep -o '"totalLoans":[0-9]*' | cut -d':' -f2)
     echo "✅ Total loans: $TOTAL_LOANS"
 }
@@ -100,9 +100,9 @@ check_service "http://localhost:8081/actuator/health" "Customer Service" || exit
 check_service "http://localhost:8082/actuator/health" "Loan Service" || exit 1
 check_service "http://localhost:8083/actuator/health" "Credit Limit Service" || exit 1
 check_service "http://localhost:8084/actuator/health" "Collateral Service" || exit 1
-check_service "http://localhost:8085/actuator/health" "Audit Service" || exit 1
+check_service "http://localhost:8087/actuator/health" "Audit Service" || exit 1
 check_service "http://localhost:8086/actuator/health" "Notification Service" || exit 1
-check_service "http://localhost:8087/actuator/health" "Reporting Service" || exit 1
+check_service "http://localhost:8085/actuator/health" "Reporting Service" || exit 1
 check_service "http://localhost:8088/actuator/health" "Monitoring Service" || exit 1
 echo ""
 
