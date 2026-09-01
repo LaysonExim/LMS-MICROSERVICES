@@ -1,6 +1,17 @@
 spring:
   application:
     name: monitoring-service
+  config:
+    import: "optional:configserver:http://${CONFIG_SERVER_HOST:config-server}:8888"
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:kafka}:9092
+    consumer:
+      group-id: monitoring-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
 
 server:
   port: 8088
