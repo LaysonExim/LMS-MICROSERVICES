@@ -1,12 +1,12 @@
-# Purpose: Dockerfile for Monitoring Service
-# File: monitoring-service/Dockerfile
-#
-# BUILD INSTRUCTIONS:
-# 1. First build the JAR: ./mvnw clean package -DskipTests -pl monitoring-service -am
-# 2. Then build Docker image: docker build -t monitoring-service ./monitoring-service
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
+WORKDIR /build
+COPY pom.xml .
+COPY monitoring-service/pom.xml ./monitoring-service/
+COPY monitoring-service/src ./monitoring-service/src
+RUN mvn clean package -DskipTests -pl monitoring-service -am
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre-slim
 WORKDIR /app
-COPY target/monitoring-service-*.jar app.jar
+COPY --from=builder /build/monitoring-service/target/monitoring-service-*.jar app.jar
 EXPOSE 8088
 ENTRYPOINT ["java", "-jar", "app.jar"]

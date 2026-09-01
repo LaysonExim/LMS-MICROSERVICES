@@ -1,12 +1,12 @@
-# Purpose: Dockerfile for Collateral Service
-# File: collateral-service/Dockerfile
-#
-# BUILD INSTRUCTIONS:
-# 1. First build the JAR: ./mvnw clean package -DskipTests -pl collateral-service -am
-# 2. Then build Docker image: docker build -t collateral-service ./collateral-service
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
+WORKDIR /build
+COPY pom.xml .
+COPY collateral-service/pom.xml ./collateral-service/
+COPY collateral-service/src ./collateral-service/src
+RUN mvn clean package -DskipTests -pl collateral-service -am
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre-slim
 WORKDIR /app
-COPY target/collateral-service-*.jar app.jar
+COPY --from=builder /build/collateral-service/target/collateral-service-*.jar app.jar
 EXPOSE 8084
 ENTRYPOINT ["java", "-jar", "app.jar"]

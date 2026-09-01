@@ -1,12 +1,12 @@
-# Purpose: Dockerfile for Customer Service
-# File: customer-service/Dockerfile
-#
-# BUILD INSTRUCTIONS:
-# 1. First build the JAR: ./mvnw clean package -DskipTests -pl customer-service -am
-# 2. Then build Docker image: docker build -t customer-service ./customer-service
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
+WORKDIR /build
+COPY pom.xml .
+COPY customer-service/pom.xml ./customer-service/
+COPY customer-service/src ./customer-service/src
+RUN mvn clean package -DskipTests -pl customer-service -am
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre-slim
 WORKDIR /app
-COPY target/customer-service-*.jar app.jar
+COPY --from=builder /build/customer-service/target/customer-service-*.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
