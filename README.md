@@ -534,11 +534,22 @@ The loan state machine enforces strict transition rules:
 
 - **Java 21** (JDK)
 - **Docker & Docker Compose**
+- **GitHub Personal Access Token** (see [Configuration](#configuration))
+
+### Environment Setup
+
+Create a `.env` file in the project root with your GitHub token:
+
+```bash
+echo "GITHUB_TOKEN=<your-github-pat>" > .env
+```
+
+This file is gitignored and used by Docker Compose to authenticate with the GitHub-hosted configuration repository.
 
 ### 1. Start All Services with Docker Compose
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 All services, databases, Kafka, and Zookeeper will start automatically with health checks ensuring proper startup order.
@@ -579,13 +590,24 @@ mvn spring-boot:run -pl API-Gateway
 
 ## Environment Variables
 
+The Config Server fetches configuration from a **remote Git repository** hosted on GitHub:
+
+**Repository:** `https://github.com/LaysonExim/nglmp-config` (private)
+
+**Required `.env` file** (create in project root — gitignored):
+
+```bash
+GITHUB_TOKEN=<your-github-personal-access-token>
+```
+
 ### Common (All Services)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `EUREKA_HOST` | `discovery-server` | Eureka server hostname |
 | `CONFIG_SERVER_HOST` | `config-server` | Config Server hostname |
-| `SPRING_CLOUD_CONFIG_FAIL_FAST` | `false` (gateway) / `true` (services) | Fail service startup if Config Server unavailable |
+| `SPRING_CLOUD_CONFIG_FAIL_FAST` | `false` | Fail service startup if Config Server unavailable |
+| `KAFKA_HOST` | `kafka` | Kafka broker (loan, audit, notification, monitoring, reporting) |
 
 ### Database (per-service)
 
