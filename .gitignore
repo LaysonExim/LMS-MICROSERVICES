@@ -37,3 +37,6 @@ build/
 application-local.yaml
 application-prod.yaml
 .env
+
+# Config Repository (moved to https://github.com/LaysonExim/nglmp-config)
+config-repo/
