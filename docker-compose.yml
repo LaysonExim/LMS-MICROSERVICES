@@ -9,17 +9,16 @@ services:
   #
   config-server:
     build:
-      context: ./config-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: config-server/Dockerfile
     container_name: config-server
     ports:
       - "8888:8888"
     networks:
       - nglmp-network
     environment:
-      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=file:///config-repo
-    volumes:
-      - ./config-repo:/config-repo
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME=nglmp
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD=${GITHUB_TOKEN}
     healthcheck:
       test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/8888" ]
       interval: 30s
@@ -33,8 +32,8 @@ services:
   #
   discovery-server:
     build:
-      context: ./discovery-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: discovery-server/Dockerfile
     container_name: discovery-server
     ports:
       - "8761:8761"
@@ -208,7 +207,7 @@ services:
     networks:
       - nglmp-network
     healthcheck:
-      test: [ "CMD", "bash", "-c", "echo 'ruok' | nc localhost 2181" ]
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/2181" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -273,8 +272,8 @@ services:
   #
   api-gateway:
     build:
-      context: ./API-Gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: API-Gateway/Dockerfile
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -296,8 +295,8 @@ services:
   #
   customer-service:
     build:
-      context: ./customer-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: customer-service/Dockerfile
     container_name: customer-service
     ports:
       - "8081:8081"
@@ -324,8 +323,8 @@ services:
   #
   loan-service:
     build:
-      context: ./loan-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: loan-service/Dockerfile
     container_name: loan-service
     ports:
       - "8082:8082"
@@ -355,8 +354,8 @@ services:
   #
   limit-service:
     build:
-      context: ./limit-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: limit-service/Dockerfile
     container_name: limit-service
     ports:
       - "8083:8083"
@@ -383,8 +382,8 @@ services:
   #
   collateral-service:
     build:
-      context: ./collateral-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: collateral-service/Dockerfile
     container_name: collateral-service
     ports:
       - "8084:8084"
@@ -411,8 +410,8 @@ services:
   #
   reporting-service:
     build:
-      context: ./reporting-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: reporting-service/Dockerfile
     container_name: reporting-service
     ports:
       - "8085:8085"
@@ -421,11 +420,14 @@ services:
     environment:
       - EUREKA_HOST=discovery-server
       - CONFIG_SERVER_HOST=config-server
+      - KAFKA_HOST=kafka
       - SPRING_CLOUD_CONFIG_FAIL_FAST=false
     depends_on:
       discovery-server:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     restart: unless-stopped
 
@@ -434,8 +436,8 @@ services:
   #
   notification-service:
     build:
-      context: ./notification-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: notification-service/Dockerfile
     container_name: notification-service
     ports:
       - "8086:8086"
@@ -465,8 +467,8 @@ services:
   #
   audit-service:
     build:
-      context: ./audit-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: audit-service/Dockerfile
     container_name: audit-service
     ports:
       - "8087:8087"
@@ -496,8 +498,8 @@ services:
   #
   monitoring-service:
     build:
-      context: ./monitoring-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: monitoring-service/Dockerfile
     container_name: monitoring-service
     ports:
       - "8088:8088"
@@ -506,11 +508,14 @@ services:
     environment:
       - EUREKA_HOST=discovery-server
       - CONFIG_SERVER_HOST=config-server
+      - KAFKA_HOST=kafka
       - SPRING_CLOUD_CONFIG_FAIL_FAST=false
     depends_on:
       discovery-server:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     restart: unless-stopped
 

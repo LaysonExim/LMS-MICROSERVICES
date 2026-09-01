@@ -21,13 +21,15 @@ spring:
     config:
       server:
         git:
-          # 
-          # EXPLANATION: Repository URI
-          # This is where the configuration files are stored.
-          # For learning, we use a local file system repository.
-          # In production, this would be a Git URL.
-          # 
-          uri: file:///${user.home}/config-repo
+           # 
+           # EXPLANATION: Repository URI
+           # Points to the remote Git repository hosting all configuration files.
+           # In production, this would be a private Git server (GitLab, GitHub Enterprise).
+           # Authentication is configured via environment variables in Docker:
+           #   SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME=<username>
+           #   SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD=<PAT or token>
+           # 
+           uri: https://github.com/LaysonExim/nglmp-config.git
           # 
           # EXPLANATION: Default Label
           # The Git branch to use (default: master/main).
@@ -39,7 +41,7 @@ spring:
           # Subdirectories in the repository to search.
           # This allows organizing configs by service/environment.
           # 
-          search-paths: '{application}'
+          search-paths: '.'
           # 
           # EXPLANATION: Timeout
           # How long to wait for Git operations.
