@@ -1,0 +1,18 @@
+# Purpose: Bootstrap configuration for API Gateway
+# File: api-gateway/src/main/resources/bootstrap.yml
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    config:
+      uri: http://${CONFIG_SERVER_HOST:config-server}:8888
+      fail-fast: false
+      retry:
+        max-attempts: 3
+        initial-interval: 1000
+        multiplier: 1.2
+        max-interval: 5000
+      label: main
+      profile: default

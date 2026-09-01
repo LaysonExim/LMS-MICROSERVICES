@@ -1,0 +1,27 @@
+﻿# Development environment configuration
+# This applies to ALL services running with 'dev' profile
+
+spring:
+  flyway:
+    clean-disabled: false  # Allow clean in dev
+
+logging:
+  level:
+    com.nextgenloan: DEBUG
+    org.springframework: DEBUG
+    org.hibernate: DEBUG
+    com.zaxxer: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+server:
+  tomcat:
+    threads:
+      max: 50  # Lower for dev
+    accesslog:
+      enabled: true
+      pattern: '%h %l %u %t "%r" %s %b'

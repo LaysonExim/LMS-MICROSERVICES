@@ -1,0 +1,542 @@
+services:
+
+  # ============================================================================
+  # Infrastructure Services
+  # ============================================================================
+
+  #
+  # Config Server
+  #
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - nglmp-network
+    environment:
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=file:///config-repo
+    volumes:
+      - ./config-repo:/config-repo
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/8888" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Discovery Server (Eureka)
+  #
+  discovery-server:
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - nglmp-network
+    environment:
+      - EUREKA_HOSTNAME=discovery-server
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/8761" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Customer Service Database
+  #
+  customer-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: customer-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Customer@123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - customer-db-data:/var/opt/mssql
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Loan Service Database
+  #
+  loan-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: loan-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Loan@123"
+    ports:
+      - "1434:1433"
+    volumes:
+      - loan-db-data:/var/opt/mssql
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Limit Service Database
+  #
+  limit-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: limit-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Limit@123"
+    ports:
+      - "1435:1433"
+    volumes:
+      - limit-db-data:/var/opt/mssql
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Collateral Service Database
+  #
+  collateral-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: collateral-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Collateral@123"
+    ports:
+      - "1436:1433"
+    volumes:
+      - collateral-db-data:/var/opt/mssql
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Audit Service Database
+  #
+  audit-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: audit-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Audit@123"
+    ports:
+      - "1437:1433"
+    volumes:
+      - audit-db-data:/var/opt/mssql
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Notification Service Database
+  #
+  notification-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: notification-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Notification@123"
+    ports:
+      - "1438:1433"
+    volumes:
+      - notification-db-data:/var/opt/mssql
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Zookeeper - Required for Kafka
+  #
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo 'ruok' | nc localhost 2181" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  #
+  # Kafka Broker
+  #
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    networks:
+      - nglmp-network
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  #
+  # Kafka UI (optional - for monitoring)
+  #
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8090:8080"
+    networks:
+      - nglmp-network
+    restart: unless-stopped
+
+  # ============================================================================
+  # Application Services
+  # ============================================================================
+
+  #
+  # API Gateway
+  #
+  api-gateway:
+    build:
+      context: ./API-Gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - nglmp-network
+    environment:
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Customer Service
+  #
+  customer-service:
+    build:
+      context: ./customer-service
+      dockerfile: Dockerfile
+    container_name: customer-service
+    ports:
+      - "8081:8081"
+    networks:
+      - nglmp-network
+    environment:
+      - DB_HOST=customer-db
+      - DB_USERNAME=sa
+      - DB_PASSWORD=Customer@123
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      customer-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Loan Service
+  #
+  loan-service:
+    build:
+      context: ./loan-service
+      dockerfile: Dockerfile
+    container_name: loan-service
+    ports:
+      - "8082:8082"
+    networks:
+      - nglmp-network
+    environment:
+      - DB_HOST=loan-db
+      - DB_USERNAME=sa
+      - DB_PASSWORD=Loan@123
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - KAFKA_HOST=kafka
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      loan-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Limit Service
+  #
+  limit-service:
+    build:
+      context: ./limit-service
+      dockerfile: Dockerfile
+    container_name: limit-service
+    ports:
+      - "8083:8083"
+    networks:
+      - nglmp-network
+    environment:
+      - DB_HOST=limit-db
+      - DB_USERNAME=sa
+      - DB_PASSWORD=Limit@123
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      limit-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Collateral Service
+  #
+  collateral-service:
+    build:
+      context: ./collateral-service
+      dockerfile: Dockerfile
+    container_name: collateral-service
+    ports:
+      - "8084:8084"
+    networks:
+      - nglmp-network
+    environment:
+      - DB_HOST=collateral-db
+      - DB_USERNAME=sa
+      - DB_PASSWORD=Collateral@123
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      collateral-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Reporting Service
+  #
+  reporting-service:
+    build:
+      context: ./reporting-service
+      dockerfile: Dockerfile
+    container_name: reporting-service
+    ports:
+      - "8085:8085"
+    networks:
+      - nglmp-network
+    environment:
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Notification Service
+  #
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8086:8086"
+    networks:
+      - nglmp-network
+    environment:
+      - DB_HOST=notification-db
+      - DB_USERNAME=sa
+      - DB_PASSWORD=Notification@123
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - KAFKA_HOST=kafka
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Audit Service
+  #
+  audit-service:
+    build:
+      context: ./audit-service
+      dockerfile: Dockerfile
+    container_name: audit-service
+    ports:
+      - "8087:8087"
+    networks:
+      - nglmp-network
+    environment:
+      - DB_HOST=audit-db
+      - DB_USERNAME=sa
+      - DB_PASSWORD=Audit@123
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - KAFKA_HOST=kafka
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      audit-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  #
+  # Monitoring Service
+  #
+  monitoring-service:
+    build:
+      context: ./monitoring-service
+      dockerfile: Dockerfile
+    container_name: monitoring-service
+    ports:
+      - "8088:8088"
+    networks:
+      - nglmp-network
+    environment:
+      - EUREKA_HOST=discovery-server
+      - CONFIG_SERVER_HOST=config-server
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ============================================================================
+# Networks
+# ============================================================================
+
+networks:
+  nglmp-network:
+    driver: bridge
+    name: nglmp-network
+
+# ============================================================================
+# Volumes
+# ============================================================================
+
+volumes:
+  customer-db-data:
+    name: customer-db-data
+  loan-db-data:
+    name: loan-db-data
+  limit-db-data:
+    name: limit-db-data
+  collateral-db-data:
+    name: collateral-db-data
+  audit-db-data:
+    name: audit-db-data
+  notification-db-data:
+    name: notification-db-data

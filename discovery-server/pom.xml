@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.nextgenloan</groupId>
+		<artifactId>nglmp-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>discovery-server</artifactId>
+	<name>Discovery Server</name>
+	<description>Netflix Eureka Service Discovery Server</description>
+
+	<dependencies>
+		<!--
+            EXPLANATION: Eureka Server Dependency
+            This is the Netflix Eureka Server implementation.
+            It provides the service registry that all services use.
+
+            WHY: Eureka is battle-tested in banking environments.
+            It's reliable, supports high availability, and integrates
+            well with Spring Cloud.
+
+            ALTERNATIVES: Consul, Zookeeper, Kubernetes services
+            We're using Eureka because it's simple to set up and
+            works well for learning the pattern.
+        -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Web Starter
+            Eureka Server needs a web server to serve its APIs
+            and the management dashboard.
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Actuator
+            For monitoring the Eureka Server itself.
+            We'll use this to check if the server is healthy.
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+        <!--
+            EXPLANATION: Security
+            We'll add security to the Eureka Server later.
+            For now, it's open (development only).
+            In production, Eureka Server must be secured.
+        -->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-security</artifactId>-->
+<!--		</dependency>-->
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

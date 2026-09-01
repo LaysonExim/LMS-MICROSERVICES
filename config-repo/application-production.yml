@@ -1,0 +1,25 @@
+﻿# Production environment configuration
+# This applies to ALL services running with 'production' profile
+
+spring:
+  flyway:
+    clean-disabled: true  # NEVER allow clean in production
+
+logging:
+  level:
+    com.nextgenloan: WARN
+    org.springframework: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+server:
+  tomcat:
+    threads:
+      max: 200  # Higher for production
+    accesslog:
+      enabled: true
+      pattern: '%h %l %u %t "%r" %s %b'

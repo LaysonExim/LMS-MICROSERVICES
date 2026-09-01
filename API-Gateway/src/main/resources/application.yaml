@@ -1,0 +1,396 @@
+# Purpose: Gateway configuration
+# File: api-gateway/src/main/resources/application.yml
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  #
+  # EXPLANATION: Config Server Import
+  # Tells the gateway to pull configuration from the Config Server
+  # at startup. Required since Spring Boot 2.4+ / Spring Cloud 2020+.
+  #
+  # "optional:" prefix lets the app boot even if Config Server
+  # is unreachable — useful for development and testing.
+  # In production, we want fail-fast behavior (bad to run on
+  # missing/stale config), so fail-fast is still enabled below.
+  #
+  config:
+    import: "optional:configserver:http://${CONFIG_SERVER_HOST:config-server}:8888"
+
+  cloud:
+    config:
+      uri: http://${CONFIG_SERVER_HOST:config-server}:8888
+      fail-fast: true
+
+    #
+    # EXPLANATION: Gateway Routes
+    # These define where requests are routed.
+    #
+    # The gateway uses predicates to match requests,
+    # then forwards them to the appropriate service.
+    #
+    gateway:
+      #
+      # EXPLANATION: Discovery Locator
+      # This enables automatic routing based on service discovery.
+      # Instead of defining routes manually, the gateway can
+      # automatically route to services registered in Eureka.
+      #
+      discovery:
+        locator:
+          enabled: false
+
+      routes:
+        - id: customer-service
+          uri: lb://customer-service
+          predicates:
+            - Path=/api/v1/customers/**
+
+        - id: customer-health
+          uri: lb://customer-service
+          predicates:
+            - Path=/api/v1/health
+
+        - id: customer-config
+          uri: lb://customer-service
+          predicates:
+            - Path=/api/v1/config/**
+
+        - id: loan-service
+          uri: lb://loan-service
+          predicates:
+            - Path=/api/v1/loans/**
+
+        - id: saga-service
+          uri: lb://loan-service
+          predicates:
+            - Path=/api/v1/saga/loans/**
+
+        - id: limit-service
+          uri: lb://limit-service
+          predicates:
+            - Path=/api/v1/credit-limits/**
+
+        - id: collateral-service
+          uri: lb://collateral-service
+          predicates:
+            - Path=/api/v1/collateral/**
+
+        - id: reporting-service
+          uri: lb://reporting-service
+          predicates:
+            - Path=/api/v1/reporting/**
+
+        - id: audit-service
+          uri: lb://audit-service
+          predicates:
+            - Path=/api/v1/audit/**
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/v1/notifications/**
+
+        - id: monitoring-service
+          uri: lb://monitoring-service
+          predicates:
+            - Path=/api/v1/monitoring/**
+
+        - id: customer-service-api-docs
+          uri: lb://customer-service
+          predicates:
+            - Path=/services/customer-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/customer-service/v3/api-docs.*, /v3/api-docs
+
+        - id: loan-service-api-docs
+          uri: lb://loan-service
+          predicates:
+            - Path=/services/loan-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/loan-service/v3/api-docs.*, /v3/api-docs
+
+        - id: limit-service-api-docs
+          uri: lb://limit-service
+          predicates:
+            - Path=/services/limit-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/limit-service/v3/api-docs.*, /v3/api-docs
+
+        - id: collateral-service-api-docs
+          uri: lb://collateral-service
+          predicates:
+            - Path=/services/collateral-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/collateral-service/v3/api-docs.*, /v3/api-docs
+
+        - id: reporting-service-api-docs
+          uri: lb://reporting-service
+          predicates:
+            - Path=/services/reporting-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/reporting-service/v3/api-docs.*, /v3/api-docs
+
+        - id: notification-service-api-docs
+          uri: lb://notification-service
+          predicates:
+            - Path=/services/notification-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/notification-service/v3/api-docs.*, /v3/api-docs
+
+        - id: audit-service-api-docs
+          uri: lb://audit-service
+          predicates:
+            - Path=/services/audit-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/audit-service/v3/api-docs.*, /v3/api-docs
+
+        - id: monitoring-service-api-docs
+          uri: lb://monitoring-service
+          predicates:
+            - Path=/services/monitoring-service/v3/api-docs/**
+          filters:
+            - RewritePath=/services/monitoring-service/v3/api-docs.*, /v3/api-docs
+
+      #
+      # EXPLANATION: Global Filters
+      # These apply to ALL routes.
+      #
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            #
+            # EXPLANATION: CORS Configuration
+            # In a bank, CORS is carefully controlled.
+            # Only allowed origins can access the API.
+            #
+            allowed-origins:
+              - "http://localhost:3000"  # Frontend app
+              - "http://localhost:8080"  # Swagger UI
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+            max-age: 3600
+
+      #
+      # EXPLANATION: HTTP Client Configuration
+      # Tuning for high throughput banking applications.
+      #
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 30s
+        pool:
+          max-idle-time: 5000
+          max-life-time: 60000
+          max-connections: 200
+          acquire-timeout: 45000
+
+#
+# EXPLANATION: Eureka Configuration
+# The gateway registers with Eureka so services can find it.
+#
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:discovery-server}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+#
+# EXPLANATION: Management/Actuator
+# The gateway exposes its own health and metrics.
+#
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway,prometheus,circuitbreaker
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true  # Enables gateway management endpoint
+
+#
+# EXPLANATION: Aggregated Swagger UI
+# This configures the Gateway to show OpenAPI specs from ALL
+# microservices in ONE Swagger UI at http://localhost:8080/swagger-ui.html
+#
+# WHY: Frontend developers don't need to know individual service ports.
+# They open ONE page and see every API from every service.
+#
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    url: /v3/api-docs/merged
+    display-request-duration: true
+    filter: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+#
+# EXPLANATION: Resilience4j Configuration
+#
+# In a real bank, these values would be tuned based on:
+# 1. Service response time patterns
+# 2. Traffic volume
+# 3. Business criticality
+# 4. Service level agreements (SLAs)
+#
+resilience4j:
+  circuitbreaker:
+    instances:
+      #
+      # EXPLANATION: Customer Service Circuit Breaker
+      #
+      customer-service:
+        #
+        # Sliding Window
+        # The number of requests to track for failure rate calculation.
+        #
+        sliding-window-size: 20
+        #
+        # Failure Rate Threshold
+        # When failure rate exceeds this (%), the circuit opens.
+        # In a bank, we might use lower thresholds for critical services.
+        #
+        failure-rate-threshold: 50
+        #
+        # Wait Duration
+        # How long to wait before trying to close the circuit.
+        # In a bank, we might use longer durations for critical services.
+        #
+        wait-duration-in-open-state: 30s
+        #
+        # Half-Open Calls
+        # Number of calls allowed in half-open state.
+        # This tests if the service has recovered.
+        #
+        permitted-number-of-calls-in-half-open-state: 5
+        #
+        # Automatic Transition
+        # Automatically transition from open to half-open.
+        # This enables self-healing.
+        #
+        automatic-transition-from-open-to-half-open-enabled: true
+        #
+        # Minimum Calls
+        # Minimum number of calls required before calculating failure rate.
+        #
+        minimum-number-of-calls: 10
+        #
+        # Record Exceptions
+        # Which exceptions count as failures.
+        #
+        record-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.net.ConnectException
+          - java.util.concurrent.TimeoutException
+        #
+        # Ignore Exceptions
+        # Which exceptions don't count as failures.
+        #
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
+
+    #
+    # EXPLANATION: Loan Service Circuit Breaker
+    # (We'll implement this when we build Loan Service)
+    #
+    loan-service:
+      sliding-window-size: 20
+      failure-rate-threshold: 50
+      wait-duration-in-open-state: 30s
+      permitted-number-of-calls-in-half-open-state: 5
+      automatic-transition-from-open-to-half-open-enabled: true
+      minimum-number-of-calls: 10
+
+  #
+  # EXPLANATION: Retry Configuration
+  # Retry transient failures (network issues, temporary errors)
+  #
+  retry:
+    instances:
+      customer-service:
+        #
+        # Max Attempts
+        # How many times to retry (including the first attempt)
+        #
+        max-attempts: 3
+        #
+        # Wait Duration
+        # How long to wait between retries
+        # In a bank, we use exponential backoff for retries
+        #
+        wait-duration: 1s
+        #
+        # Exponential Backoff
+        # Multiplier for wait duration between retries
+        #
+        retry-exceptions:
+          - java.net.ConnectException
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.HttpServerErrorException
+
+  #
+  # EXPLANATION: Timeout Configuration
+  # Prevent operations from blocking indefinitely
+  #
+  timeout:
+    instances:
+      customer-service:
+        #
+        # Timeout Duration
+        # Maximum time to wait for a response
+        # In a bank, this is set based on the SLA
+        #
+        timeout-duration: 5s
+
+  #
+  # EXPLANATION: Bulkhead Configuration
+  # Limit the number of concurrent calls to a service
+  #
+  bulkhead:
+    instances:
+      customer-service:
+        #
+        # Max Concurrent Calls
+        # Maximum number of concurrent calls to the service
+        # In a bank, this prevents resource exhaustion
+        #
+        max-concurrent-calls: 10
+        #
+        # Max Wait Duration
+        # How long to wait for a slot to become available
+        #
+        max-wait-duration: 0ms
+
+#
+# EXPLANATION: Logging
+# We enable DEBUG to see routing details.
+#
+logging:
+  level:
+    com.nextgenloan.API.Gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web: DEBUG
+    reactor.netty: INFO
+
+    

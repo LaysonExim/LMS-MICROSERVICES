@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: monitoring-service
+
+server:
+  port: 8088
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:discovery-server}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    prefer-ip-address: true
+
+logging:
+  level:
+    com.nextgenloan: DEBUG
+    org.springframework.kafka: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  cors:
+    allowed-origins: "http://localhost:8080"
+    allowed-methods: "*"
+    allowed-headers: "*"

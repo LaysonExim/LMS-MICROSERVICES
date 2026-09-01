@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.nextgenloan</groupId>
+		<artifactId>nglmp-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>api-gateway</artifactId>
+	<name>API Gateway</name>
+	<description>Spring Cloud Gateway - Single Entry Point</description>
+
+	<dependencies>
+		<!--
+            EXPLANATION: Spring Cloud Gateway
+            This is the reactive gateway implementation.
+            It's non-blocking and handles high throughput.
+
+            WHY: In banking, we need high performance.
+            Spring Cloud Gateway is based on Reactor Netty,
+            which is non-blocking and handles thousands of
+            concurrent connections efficiently.
+
+            ALTERNATIVE: Zuul 2.x (also reactive)
+            We're using Spring Cloud Gateway because it's
+            the newer, more actively developed solution.
+        -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-gateway</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Service Discovery Integration
+            This allows the gateway to discover services via Eureka.
+            Instead of hardcoding URLs, the gateway uses:
+            lb://service-name (load balanced)
+        -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Circuit Breaker
+            For resilience - if a service is down,
+            the gateway can return a fallback response.
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+
+		<!--
+            EXPLANATION: Actuator
+            For monitoring the gateway.
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: OpenAPI/Swagger Documentation
+            This provides the @Operation annotation and Swagger UI
+            for the gateway's own endpoints.
+        -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Security
+            We'll add security to the gateway later.
+            For now, it's open (development only).
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Rate Limiting
+            For production, we'd use Redis for rate limiting.
+            For now, we'll use in-memory rate limiting.
+        -->
+		<!--
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+        -->
+
+		<!--
+            EXPLANATION: Testing
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<!--
+            EXPLANATION: Resilience4j Circuit Breaker
+            This is the core resilience library.
+            It provides circuit breaker, retry, bulkhead, and timeout.
+
+            WHY: In banking, we use Resilience4j because:
+            1. It's lightweight and fast
+            2. It's non-blocking (works well with reactive)
+            3. It's well-tested in production
+            4. It integrates well with Spring Cloud
+
+            ALTERNATIVES: Hystrix (deprecated), Sentinel
+            Resilience4j is the modern standard.
+        -->
+		<dependency>
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-spring-boot3</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-reactor</artifactId>
+		</dependency>
+
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-micrometer</artifactId>
+        </dependency>
+    </dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.12.1</version>
+				<configuration>
+					<source>21</source>
+					<target>21</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

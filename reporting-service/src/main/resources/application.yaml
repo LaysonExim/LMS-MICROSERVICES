@@ -1,0 +1,38 @@
+spring:
+  config:
+    import: "optional:configserver:http://${CONFIG_SERVER_HOST:config-server}:8888"
+
+  application:
+    name: reporting-service
+
+server:
+  port: 8085
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:discovery-server}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    prefer-ip-address: true
+
+logging:
+  level:
+    com.nextgenloan: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  cors:
+    allowed-origins: "http://localhost:8080"
+    allowed-methods: "*"
+    allowed-headers: "*"

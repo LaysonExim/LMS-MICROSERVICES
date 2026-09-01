@@ -1,0 +1,71 @@
+# Purpose: Bootstrap configuration for Customer Service
+# File: customer-service/src/main/resources/bootstrap.yml
+
+#
+# EXPLANATION: Bootstrap vs Application Configuration
+#
+# bootstrap.yml is loaded BEFORE application.yml.
+# It contains configuration that the service needs to start,
+# such as: "How to find the Config Server?"
+#
+# application.yml contains the application-specific configuration
+# that comes from the Config Server.
+#
+
+spring:
+  application:
+    name: customer-service  # This is the service name used by Config Server
+
+  #
+  # EXPLANATION: Config Server Connection
+  # This tells the service how to find the Config Server.
+  # The service will fetch its configuration from here.
+  #
+  cloud:
+    config:
+      #
+      # EXPLANATION: Config Server URI
+      # The URL of the Config Server.
+      # In a real bank, this would be a load-balanced URL.
+      #
+      uri: http://${CONFIG_SERVER_HOST:config-server}:8888
+      #
+      # EXPLANATION: Fail Fast
+      # If the Config Server is unavailable, fail fast.
+      # This prevents the service from starting with stale config.
+      #
+      fail-fast: true
+      #
+      # EXPLANATION: Retry
+      # Retry connecting to Config Server if it's unavailable.
+      #
+      retry:
+        max-attempts: 6
+        initial-interval: 1000
+        multiplier: 1.2
+        max-interval: 5000
+      #
+      # EXPLANATION: Label
+      # The Git branch to use (default: main).
+      # In a real bank, we'd use different branches for envs.
+      #
+      label: main
+      #
+      # EXPLANATION: Profile
+      # The environment profile (dev, production, etc.)
+      # This determines which configuration files are loaded.
+      #
+      profile: default
+
+#
+# EXPLANATION: Management
+# We expose the refresh endpoint for dynamic config updates.
+#
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,refresh
+  endpoint:
+    refresh:
+      enabled: true

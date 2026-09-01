@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        EXPLANATION: Why this parent POM?
+        In a bank, we want ALL our services to use the SAME versions
+        of Spring Boot, dependencies, and plugins. This parent POM
+        ensures that if we upgrade Spring Boot, EVERY service
+        upgrades together. No service gets left behind with a
+        security vulnerability.
+    -->
+
+    <groupId>com.nextgenloan</groupId>
+    <artifactId>nglmp-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>NextGen Loan Management Platform</name>
+    <description>Enterprise Microservices Platform for Loan Management</description>
+
+    <!--
+        EXPLANATION: Spring Boot Starter Parent
+        This gives us all the default Spring Boot configurations.
+        In banking, we use this to avoid reinventing the wheel.
+        Spring Boot already handles many enterprise concerns
+        like embedded servers, dependency versions, and default configurations.
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.0</version>
+        <relativePath/>
+    </parent>
+
+    <!--
+        EXPLANATION: Properties section
+        We define ALL versions here. When we need to upgrade
+        a dependency, we change it in ONE place. In the bank,
+        this makes security updates fast. When a critical
+        vulnerability is found in a library, we update here
+        and rebuild everything.
+    -->
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2023.0.2</spring-cloud.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Dependency versions - centralized management -->
+        <lombok.version>1.18.32</lombok.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <testcontainers.version>1.19.7</testcontainers.version>
+        <mssql-jdbc.version>12.6.3.jre11</mssql-jdbc.version>
+        <flyway.version>11.3.0</flyway.version>
+        <springdoc.version>2.5.0</springdoc.version>
+        <junit-jupiter.version>5.10.2</junit-jupiter.version>
+    </properties>
+
+    <!--
+        EXPLANATION: Dependency Management
+        This is NOT where we declare dependencies - it's where we
+        DECLARE VERSIONS. Child modules can use these without
+        specifying versions. This ensures version consistency
+        across ALL services.
+    -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Cloud Dependencies -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!--
+                EXPLANATION: Database and Migration Dependencies
+                We want all services to use the SAME Microsoft SQL Server
+                JDBC driver version and Flyway version. This prevents issues
+                where one service uses an older, buggier version.
+            -->
+            <dependency>
+                <groupId>com.microsoft.sqlserver</groupId>
+                <artifactId>mssql-jdbc</artifactId>
+                <version>${mssql-jdbc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-sqlserver</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+
+            <!--
+                EXPLANATION: Testing Dependencies
+                Testcontainers is critical in banking. We use it
+                to test against REAL databases, not H2 in-memory.
+                This catches integration issues before they hit
+                production.
+            -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>mssqlserver</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!--
+                EXPLANATION: Documentation
+                In banking, API documentation is REQUIRED by
+                regulators. We use OpenAPI/Swagger to document
+                our APIs and ensure compliance.
+            -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!--
+                EXPLANATION: Utility Libraries
+                Lombok reduces boilerplate, MapStruct provides
+                type-safe mapping between DTOs and entities.
+                Both are industry standards.
+            -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!--
+        EXPLANATION: Modules
+        This lists all the child modules. When we run `mvn clean install`
+        from the parent, Maven will build all these modules in the
+        correct order. In the bank, this is how we build our entire
+        platform with one command.
+    -->
+    <modules>
+        <module>discovery-server</module>
+        <module>config-server</module>
+        <module>API-Gateway</module>
+        <module>customer-service</module>
+        <module>loan-service</module>
+        <module>limit-service</module>
+        <module>collateral-service</module>
+        <module>notification-service</module>
+        <module>audit-service</module>
+        <module>reporting-service</module>
+        <module>monitoring-service</module>
+<!--        <module>payment-service</module>-->
+    </modules>
+
+    <!--
+        EXPLANATION: Build Configuration
+        We configure common plugins here. Every service will
+        automatically get these configurations. This is how
+        we ensure every service follows the same standards.
+    -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>21</source>
+                        <target>21</target>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                    <configuration>
+                        <!-- Ensure all tests run -->
+                        <includes>
+                            <include>**/*Test.java</include>
+                            <include>**/*Tests.java</include>
+                        </includes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!--
+        EXPLANATION: Repositories
+        In banks, we often use internal Artifactory/Nexus repositories.
+        Here we include standard Maven Central and Spring repositories.
+    -->
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+        </repository>
+    </repositories>
+</project>

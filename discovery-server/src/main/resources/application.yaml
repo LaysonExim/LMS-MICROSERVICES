@@ -1,0 +1,112 @@
+# Purpose: Eureka Server configuration
+# File: discovery-server/src/main/resources/application.yml
+
+# 
+# EXPLANATION: Eureka Server Configuration
+# 
+# In a real bank, Eureka Server would have a more complex
+# configuration. This is a simplified version for learning.
+# 
+
+server:
+  port: 8761  # Standard Eureka port
+
+spring:
+  application:
+    name: discovery-server
+  
+  # 
+  # EXPLANATION: Security Configuration
+  # For development, we disable security temporarily.
+  # In production, we would enable security with basic auth
+  # or OAuth2 for service registration.
+  # 
+  security:
+    basic:
+      enabled: false
+  # In production: security.user.name and security.user.password
+
+# 
+# EXPLANATION: Eureka Server Settings
+# 
+eureka:
+  instance:
+    hostname: ${EUREKA_HOSTNAME:localhost}
+
+  client:
+    # 
+    # EXPLANATION: This is the server, so it doesn't register itself
+    # In a high-availability setup, Eureka servers would register
+    # with each other (peer-to-peer replication).
+    # 
+    register-with-eureka: false
+    fetch-registry: false
+    
+    # 
+    # EXPLANATION: Service URL
+    # This is the URL where services register.
+    # Services will use this to register with Eureka.
+    # 
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  
+  server:
+    # 
+    # EXPLANATION: Self-Preservation Mode
+    # When enabled, Eureka will not remove services even if they
+    # stop sending heartbeats. This prevents services from being
+    # removed during network issues.
+    # 
+    # In a bank, this is CRITICAL.
+    # If a network partition occurs, we don't want services
+    # to be removed from the registry. That would cause failures.
+    # 
+    enable-self-preservation: true
+    
+    # 
+    # EXPLANATION: Eviction Interval
+    # How often Eureka checks for expired instances.
+    # Default is 60 seconds.
+    # In banking, we might reduce this to detect failures faster.
+    # 
+    eviction-interval-timer-in-ms: 60000
+    
+    # 
+    # EXPLANATION: Response Cache
+    # Eureka caches registry responses for performance.
+    # In banking, we might reduce this for faster updates.
+    # 
+    response-cache-auto-expiration-in-seconds: 180
+    
+    # 
+    # EXPLANATION: Renewal Threshold
+    # The percentage of services that must send heartbeats
+    # for Eureka to consider the system healthy.
+    # 
+    renewal-percent-threshold: 0.85
+
+# 
+# EXPLANATION: Logging for Eureka
+# We enable debug logging to see what's happening.
+# In production, we'd set this to INFO or WARN.
+# 
+logging:
+  level:
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# 
+# EXPLANATION: Management/Actuator
+# We expose health and info for monitoring.
+# 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.nextgenloan</groupId>
+		<artifactId>nglmp-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>config-server</artifactId>
+	<name>Config Server</name>
+	<description>Centralized Configuration Server</description>
+
+	<dependencies>
+		<!--
+            EXPLANATION: Config Server Dependency
+            This is Spring Cloud Config Server.
+            It serves configuration from Git repositories.
+
+            WHY: In a bank, configuration needs to be:
+            1. Centralized - all config in one place
+            2. Auditable - all changes tracked in Git
+            3. Environment-specific - dev vs prod configs
+            4. Refreshable - changes without restart
+            5. Secure - secrets encrypted
+        -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-config-server</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Web Starter
+            Config Server needs to serve REST APIs.
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!--
+            EXPLANATION: Actuator
+            For monitoring the Config Server.
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+        <!--
+            EXPLANATION: Security
+            We'll add security to the Config Server later.
+            For now, it's open (development only).
+            In production, Config Server must be secured.
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

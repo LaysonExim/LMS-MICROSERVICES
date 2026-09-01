@@ -1,0 +1,102 @@
+# Purpose: Config Server configuration
+# File: config-server/src/main/resources/application.yml
+
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  
+  # 
+  # EXPLANATION: Git Configuration
+  # This tells the Config Server where to find configuration files.
+  # 
+  # In a real bank:
+  # - The Git repository would be internal (GitLab, GitHub Enterprise)
+  # - Access would be authenticated (SSH or HTTPS with credentials)
+  # - Configuration would be encrypted at rest
+  # 
+  cloud:
+    config:
+      server:
+        git:
+          # 
+          # EXPLANATION: Repository URI
+          # This is where the configuration files are stored.
+          # For learning, we use a local file system repository.
+          # In production, this would be a Git URL.
+          # 
+          uri: file:///${user.home}/config-repo
+          # 
+          # EXPLANATION: Default Label
+          # The Git branch to use (default: master/main).
+          # In a bank, we'd have different branches for envs.
+          # 
+          default-label: main
+          # 
+          # EXPLANATION: Search Paths
+          # Subdirectories in the repository to search.
+          # This allows organizing configs by service/environment.
+          # 
+          search-paths: '{application}'
+          # 
+          # EXPLANATION: Timeout
+          # How long to wait for Git operations.
+          # 
+          timeout: 5
+          # 
+          # EXPLANATION: Force Pull
+          # Always pull the latest configuration.
+          # In a bank, we want the latest configs.
+          # 
+          force-pull: true
+          
+          # 
+          # EXPLANATION: Authentication (for Git)
+          # These would be used for authenticating to Git.
+          # 
+          # username: ${GIT_USERNAME}
+          # password: ${GIT_PASSWORD}
+          
+          # 
+          # EXPLANATION: SSH Key (for private repos)
+          # 
+          # private-key: ${GIT_PRIVATE_KEY}
+          # host-key: ${GIT_HOST_KEY}
+      
+      # 
+      # EXPLANATION: Health Check
+      # How often to check if the Git repository is accessible.
+      # 
+      health:
+        repositories:
+          enabled: true
+
+# 
+# EXPLANATION: Security
+# For development, we disable security temporarily.
+# In production, we would enable security with basic auth.
+# 
+management:
+  security:
+    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh
+  endpoint:
+    health:
+      show-details: always
+    refresh:
+      enabled: true
+
+# 
+# EXPLANATION: Logging
+# We enable DEBUG to see what's happening.
+# 
+logging:
+  level:
+    org.springframework.cloud.config: DEBUG
+    org.springframework.cloud.config.server: DEBUG
+    org.springframework.boot: INFO

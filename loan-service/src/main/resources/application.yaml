@@ -1,0 +1,208 @@
+# Purpose: Loan Service configuration
+# File: loan-service/src/main/resources/application.yml
+
+#
+# EXPLANATION: Why YAML?
+# In banking, we use YAML because it's more readable than
+# properties files when we have nested configuration. It's
+# also easier to maintain in Git-based configuration repositories.
+#
+
+spring:
+  config:
+    import: "optional:configserver:http://${CONFIG_SERVER_HOST:config-server}:8888"
+
+  application:
+    # The service name used for service discovery
+    # This MUST match the name used in other services to call this one
+    name: loan-service
+
+  #
+  # EXPLANATION: Database Configuration
+  # In a real bank, these values would come from environment
+  # variables or Config Server. They would NEVER be hardcoded
+  # in version control.
+  #
+  datasource:
+    url: jdbc:sqlserver://${DB_HOST:loan-db}:1433;databaseName=loan_db;encrypt=true;trustServerCertificate=true
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:12345678}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      # Connection pool configuration
+      # In banking, we need careful pool sizing to handle
+      # transaction spikes without overwhelming the database
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    # JPA configuration
+    # We use Hibernate in banking because it's mature and well-tested
+    # However, we carefully control what Hibernate generates
+    hibernate:
+      ddl-auto: validate  # Only validate schema, don't create/drop
+    show-sql: false  # In production, we don't show SQL
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true  # In development only
+        # Important: In banking, we need row-level locking
+        # for some operations to prevent double-booking
+        jdbc:
+          batch_size: 20
+          lob:
+            non_contextual_creation: true
+
+  flyway:
+    # Flyway manages database schema migrations
+    # In banking, ALL schema changes MUST go through Flyway
+    # No manual SQL changes are allowed
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    # Important: In a bank, we use checksums to ensure
+    # migration files haven't been tampered with
+    validate-on-migrate: true
+    clean-disabled: true  # NEVER allow clean in production
+
+server:
+  port: 8082  # Loan Service runs on port 8082
+  # In a real bank, each service runs on a different port
+  # to avoid conflicts when running locally
+
+  #
+  # EXPLANATION: Tomcat Configuration
+  # In banking, we carefully tune Tomcat for performance
+  # and reliability
+  #
+  tomcat:
+    threads:
+      max: 200  # Maximum threads for handling requests
+      min-spare: 10  # Minimum threads to keep ready
+    connection-timeout: 30000
+    max-connections: 10000
+    accept-count: 100
+
+#
+# EXPLANATION: Logging Configuration
+# In banking, we log EVERYTHING important. Logs are used for
+# auditing, debugging, and security investigations.
+#
+logging:
+  level:
+    com.netflix.discovery: DEBUG
+    org.springframework.cloud.client.discovery: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+    com.nextgenloan: DEBUG
+
+#
+# EXPLANATION: Management/Actuator Configuration
+# Actuator exposes endpoints for monitoring and management
+# In banking, these are secured and monitored
+#
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      # Only expose safe endpoints by default
+      # In production, we'd secure these with authentication
+  endpoint:
+    health:
+      show-details: always
+      # Health check is critical - it tells Kubernetes/Docker
+      # if the service is ready to accept traffic
+    info:
+      enabled: true
+
+#
+# EXPLANATION: API Documentation
+# SpringDoc OpenAPI configuration
+#
+springdoc:
+  cors:
+    allowed-origins: "http://localhost:8080"
+    allowed-methods: "*"
+    allowed-headers: "*"
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    try-it-out-enabled: true
+  show-actuator: true
+
+#
+# EXPLANATION: Service Discovery
+# This will be used when we configure Eureka
+#
+eureka:
+  client:
+    #
+    # EXPLANATION: Service URL
+    # This is the URL of the Eureka Server.
+    # In a real bank, this would be a load-balanced URL
+    # pointing to multiple Eureka servers.
+    #
+    service-url:
+      defaultZone: http://${EUREKA_HOST:discovery-server}:8761/eureka/
+
+    #
+    # EXPLANATION: Registration
+    # register-with-eureka: true (default) - registers with Eureka
+    # fetch-registry: true (default) - fetches registry from Eureka
+    #
+    # We set these explicitly for clarity.
+    #
+    register-with-eureka: true
+    fetch-registry: true
+
+    #
+    # EXPLANATION: Health Check
+    # This enables the health check endpoint.
+    # Eureka will use this to check if the service is healthy.
+    #
+    healthcheck:
+      enabled: true
+
+    #
+    # EXPLANATION: Refresh Rate
+    # How often the client updates its registry cache.
+    #
+    registry-fetch-interval-seconds: 30
+
+  instance:
+    #
+    # EXPLANATION: Instance ID
+    # Unique identifier for this instance.
+    # In a real bank, this would include the server name or IP.
+    #
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+    #
+    # EXPLANATION: Lease Renewal
+    # How often the service sends heartbeats (30 seconds default)
+    #
+    lease-renewal-interval-in-seconds: 30
+
+    #
+    # EXPLANATION: Lease Expiration
+    # If Eureka doesn't receive a heartbeat for 90 seconds,
+    # it will remove the service from the registry.
+    #
+    lease-expiration-duration-in-seconds: 90
+
+    #
+    # EXPLANATION: Prefer IP Address
+    # When registering, use the IP address instead of hostname.
+    # This is better for cloud environments.
+    #
+    prefer-ip-address: true
+
+    #
+    # EXPLANATION: Health Check
+    # The URL that Eureka uses to check if the service is healthy.
+    #
+    health-check-url-path: /actuator/health
